@@ -172,14 +172,43 @@ typedef void (^ENMLHTMLCompletionBlock)(NSString* html, NSError *error);
     }
 }
 
+-(UIImage *)imageWithImage:(UIImage*)image scaledToSize:(CGSize)newSize
+{
+    // Create a bitmap context.
+    UIGraphicsBeginImageContextWithOptions(newSize, YES, [UIScreen mainScreen].scale);
+    [image drawInRect:CGRectMake(0,0,newSize.width,newSize.height)];
+    UIImage* newImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return newImage;
+    
+}
+
 - (void) writeImageTagForResource:(EDAMResource *)resource
                    withAttributes:(NSDictionary *)attributes
 {
     
     NSMutableDictionary *imageAttributes = [NSMutableDictionary dictionaryWithDictionary:attributes];
     NSString *mime = [resource mime];
-    NSString* imgStr = [NSString stringWithFormat:@"data:%@;base64,%@",mime,[[[resource data] body] enbase64Encoding]];
-
+    
+    NSNumber *width = [attributes objectForKey:@"width"];
+    NSNumber *height = [attributes objectForKey:@"height"];
+    
+    if (width == nil || height == nil) {
+        width = [NSNumber numberWithInt:[resource width]];
+        height = [NSNumber numberWithInt:[resource height]];
+    }
+    
+    CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
+    if (width.floatValue > screenWidth) {
+        float factor = screenWidth / width.floatValue;
+        width = @(screenWidth);
+        height = @(height.floatValue * factor);
+    }
+    
+    UIImage * image = [UIImage imageWithData:[[resource data] body]];
+    image = [self imageWithImage:image scaledToSize:CGSizeMake(width.floatValue, height.floatValue)];
+    NSString* imgStr = [NSString stringWithFormat:@"data:%@;base64,%@",mime,[UIImagePNGRepresentation(image) enbase64Encoding]];
+    
     [imageAttributes setObject:imgStr
                         forKey:@"src"];
     if (mime == nil) {
@@ -188,13 +217,6 @@ typedef void (^ENMLHTMLCompletionBlock)(NSString* html, NSError *error);
     
     [imageAttributes setObject:mime
                         forKey:ENHTMLAttributeMime];
-    
-    NSNumber *width = [attributes objectForKey:@"width"];
-    NSNumber *height = [attributes objectForKey:@"height"];
-    if (width == nil || height == nil) {
-        width = [NSNumber numberWithInt:[resource width]];
-        height = [NSNumber numberWithInt:[resource height]];
-    }
     
     [imageAttributes setObject:width
                         forKey:@"width"];
