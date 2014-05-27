@@ -45,6 +45,8 @@ typedef void (^ENMLHTMLCompletionBlock)(NSString* html, NSError *error);
 @property (nonatomic,copy) ENMLHTMLCompletionBlock completionBlock;
 @property (nonatomic,strong) NSXMLParser* xmlParser;
 @property (nonatomic,assign) BOOL shouldIgnoreNextEndElement;
+@property BOOL htmlForEmail;
+@property CGFloat maxWidth;
 
 @end
 
@@ -66,6 +68,14 @@ typedef void (^ENMLHTMLCompletionBlock)(NSString* html, NSError *error);
 
 - (void) convertENMLToHTML:(NSString*)enmlContent completionBlock:(void(^)(NSString* html, NSError *error))block {
     [self convertENMLToHTML:enmlContent withResources:nil completionBlock:block];
+}
+
+- (void) convertENMLToHTMLEmail:(NSString*)enmlContent withResources:(NSArray*)resources maxWidth:(CGFloat) maxWidth completionBlock:(void(^)(NSString* html, NSError *error))block {
+    self.htmlForEmail = TRUE;
+    self.maxWidth = maxWidth;
+    [self convertENMLToHTML:enmlContent withResources:resources completionBlock:^(NSString *html, NSError *error) {
+        block(html, error);
+    }];
 }
 
 
@@ -198,7 +208,7 @@ typedef void (^ENMLHTMLCompletionBlock)(NSString* html, NSError *error);
         height = [NSNumber numberWithInt:[resource height]];
     }
     
-    CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
+    CGFloat screenWidth = self.maxWidth>0?self.maxWidth:[UIScreen mainScreen].bounds.size.width;
     if (width.floatValue > screenWidth) {
         float factor = screenWidth / width.floatValue;
         width = @(screenWidth);
@@ -207,12 +217,21 @@ typedef void (^ENMLHTMLCompletionBlock)(NSString* html, NSError *error);
     
     UIImage * image = [UIImage imageWithData:[[resource data] body]];
     image = [self imageWithImage:image scaledToSize:CGSizeMake(width.floatValue, height.floatValue)];
-    NSString* imgStr = [NSString stringWithFormat:@"data:%@;base64,%@",mime,[UIImagePNGRepresentation(image) enbase64Encoding]];
     
-    [imageAttributes setObject:imgStr
-                        forKey:@"src"];
-    if (mime == nil) {
-        mime = ENMIMETypeOctetStream;
+    if (self.htmlForEmail) {
+        NSData * bodyHash = [[resource data] bodyHash];
+        [imageAttributes setObject:[NSString stringWithFormat:@"cid:%@", [bodyHash enlowercaseHexDigits]] forKey:@"src"];
+        if (mime == nil) {
+            mime = ENMIMETypeOctetStream;
+        }
+    } else {
+        NSString* imgStr = [NSString stringWithFormat:@"data:%@;base64,%@",mime,[UIImageJPEGRepresentation(image, 0.9) enbase64Encoding]];
+        
+        [imageAttributes setObject:imgStr
+                            forKey:@"src"];
+        if (mime == nil) {
+            mime = ENMIMETypeOctetStream;
+        }
     }
     
     [imageAttributes setObject:mime

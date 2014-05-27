@@ -50,6 +50,7 @@
  */
 - (void) convertENMLToHTML:(NSString*)enmlContent completionBlock:(void(^)(NSString* html, NSError *error))block;
 
+- (void) convertENMLToHTMLEmail:(NSString*)enmlContent withResources:(NSArray*)resources maxWidth:(CGFloat) maxWidth completionBlock:(void(^)(NSString* html, NSError *error))block;
 
 /** Utility function to convert ENML to HTML.
  
