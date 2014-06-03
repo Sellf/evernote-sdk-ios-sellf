@@ -208,15 +208,14 @@ typedef void (^ENMLHTMLCompletionBlock)(NSString* html, NSError *error);
         height = [NSNumber numberWithInt:[resource height]];
     }
     
+    BOOL resized = FALSE;
     CGFloat screenWidth = self.maxWidth>0?self.maxWidth:[UIScreen mainScreen].bounds.size.width;
     if (width.floatValue > screenWidth) {
         float factor = screenWidth / width.floatValue;
         width = @(screenWidth);
         height = @(height.floatValue * factor);
+        resized = TRUE;
     }
-    
-    UIImage * image = [UIImage imageWithData:[[resource data] body]];
-    image = [self imageWithImage:image scaledToSize:CGSizeMake(width.floatValue, height.floatValue)];
     
     if (self.htmlForEmail) {
         NSData * bodyHash = [[resource data] bodyHash];
@@ -225,10 +224,17 @@ typedef void (^ENMLHTMLCompletionBlock)(NSString* html, NSError *error);
             mime = ENMIMETypeOctetStream;
         }
     } else {
-        NSString* imgStr = [NSString stringWithFormat:@"data:%@;base64,%@",mime,[UIImageJPEGRepresentation(image, 0.9) enbase64Encoding]];
+        if (resized) {
+            UIImage * image = [UIImage imageWithData:[[resource data] body]];
+            image = [self imageWithImage:image scaledToSize:CGSizeMake(width.floatValue, height.floatValue)];
+            
+            NSString* imgStr = [NSString stringWithFormat:@"data:%@;base64,%@",mime,[UIImageJPEGRepresentation(image, 0.9) enbase64Encoding]];
+            [imageAttributes setObject:imgStr forKey:@"src"];
+        } else {
+            NSString* imgStr = [NSString stringWithFormat:@"data:%@;base64,%@",mime,[[[resource data] body] enbase64Encoding]];
+            [imageAttributes setObject:imgStr forKey:@"src"];
+        }
         
-        [imageAttributes setObject:imgStr
-                            forKey:@"src"];
         if (mime == nil) {
             mime = ENMIMETypeOctetStream;
         }
