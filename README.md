@@ -1,5 +1,9 @@
-Evernote SDK for iOS version 1.3.1
-=========================================
+[Deprecated] Evernote SDK for iOS version 1.3.1 
+================================================
+
+Read Me First!
+--------------
+If you are *beginning a new integration* with Evernote, please start with the newer [Cloud SDK for iOS](https://github.com/evernote/evernote-cloud-sdk-ios) located [here](https://github.com/evernote/evernote-cloud-sdk-ios). It makes the most common integrations very easy, and still offers access to the full Evernote API.
 
 What this is
 ------------
