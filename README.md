@@ -1,6 +1,8 @@
 [Deprecated] Evernote SDK for iOS version 1.3.1 
 ================================================
 
+This Evernote SDK was included in Sellf for fixing a bug related to the resize of the images in the fetched evernote notes.
+
 Read Me First!
 --------------
 If you are *beginning a new integration* with Evernote, please start with the newer [Cloud SDK for iOS](https://github.com/evernote/evernote-cloud-sdk-ios) located [here](https://github.com/evernote/evernote-cloud-sdk-ios). It makes the most common integrations very easy, and still offers access to the full Evernote API.
